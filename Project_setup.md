@@ -28,8 +28,9 @@ Here is the tl;dr(too long; didnt read) overview: everything gets its own place,
 	   |- setup.py
 	|- data/
 	   |- raw/
+	   |- interim/
 	   |- processed/
-	   |- cleaned/
+	   |- README.md
 	|- scripts/
 	   |- script1.py
 	   |- script2.py
@@ -44,23 +45,22 @@ It is most front-facing file in your repository. It should contain information t
 Note here that the *why* portion is the most important. It gives the necessary context for the reader of your README file. Think of it as documentation that you leave behind, so you don’t have to sit down and explain over and over the high-level overview of the project. 
 
 
-### `notebooks/`
+## `notebooks/`
 We put our notebooks in this directory. As we develop the project, a narrative begins to develop, and we can start structuring our notebooks in "logical chunks" (`{something-logical}-notebook.ipynb`). They should also be ordered, which explains the numbering on the file names. We may use some notebooks for prototyping (`{something}-prototype.ipynb`). Additionally, we may find that some analyses are no longer useful, (`archive/no-longer-useful.ipynb`). Finally, we have a `figures/` directory, which can be optionally further organized, in which figures relevant to the project are placed.
 
 
-### `projectname/`
-If this looks intimidating, unnecessarily complicated, or something along those lines, humour me for a moment. I have a lesson learned from multiple months of working with other people that led me to this somewhat complicated, but hopefully ultimately useful directory structure.
+## `projectname/`
+Under this folder called `projectname/`, we put in a lightweight Python package called `projectname` that has all things that are refactored out of notebooks to keep them clean.\
 
-Under this folder called `projectname/`, we put in a lightweight Python package called `projectname` that has all things that are refactored out of notebooks to keep them clean. It has an `__init__.py` underneath it so that we can import functions and variables into our notebooks and scripts:
+#### `__init__.py`
+It so that we can import functions and variables into our notebooks and scripts:
 
 	from projectname import something
 
 #### `config.py`
-
-In `projectname/projectname/config.py`, we place in special paths and variables that are used across the project. An example might be:
+Here we place in special paths and variables that are used across the project. An example might be:
 
 	# config.py
-	
 	from pathlib import Path  # pathlib is seriously awesome!
 	
 	data_dir = Path('/path/to/some/logical/parent/dir')
@@ -80,8 +80,7 @@ Then, in our notebooks, we can easily import these variables and not worry about
 By using these `config.py` files, we get clean code in exchange for an investment of time naming variables logically.
 
 #### `custom_funcs.py`
-
-In `projectname/projectname/custom_funcs.py`, we can put in custom code that gets used across more than notebook. One example would be downstream data preprocessing that is only necessary for a subset of notebooks.
+Here we can put in custom code that gets used across more than notebook. One example would be downstream data preprocessing that is only necessary for a subset of notebooks.
 
 	# custom_funcs.py
 	
@@ -109,16 +108,16 @@ Now, in our notebooks, we can do:
 	df = pd.read_csv(data_path)
 	processed = custom_preprocessor(df)
 
-#### `test_{stuff}.py`
+#### `plots.py`
+Here we write code to create visualizations
 
+#### `test_{stuff}.py`
 Finally, you may have noticed that there is a `test_config.py` and `test_custom_funcs.py` file. Those two modules, which I'll call "test modules", house tests for their respective Python modules (the `config.py` and `custom_funcs.py` files). 
 
 Yes, I'm a big believer that data scientists should be writing tests for their code. Now, these tests don't have to be software-engineer-esque, production-ready tests. The bare minimum is just a single example that shows exactly what you're trying to accomplish with the function. If you accidentally break the function, the test will catch it for you. That's all a test is, and the single example is all that the "bare minimum test" has to cover.
 
 #### `setup.py`
-
 The final part of this is to create a `setup.py` file for the custom Python package (called `projectname`). Here is a simple boilerplate for how it has to look:
-
 	from setuptools import setup, find_packages
 	
 	setup(name="projectname",
@@ -127,18 +126,8 @@ The final part of this is to create a `setup.py` file for the custom Python pack
 Because this is a package that is intended to stay local and not be uploaded to PyPI, we only need to know its `name` and its `version`. Everything else, including its description, long description, author name, email address and more, are optional. You can include it, but it isn't mandatory.
 
 ### `data/`
-
-	/path/to/project/directory/
-	|- data/
-	   |- raw/
-	   |- processed/
-	   |- cleaned/
-	   |- README.md
-
-Under `data/`, we keep separate directories for the `raw/` data, intermediate `processed/` data, and final `cleaned/` data. (These names, by the way, are completely arbitrary, you can name them in some other way if you desire, as long as they convey the same ideas.)
-
-You'll note that there is also a `README.md` associated with this directory. This is intentional: it should contain the following details:
-
+We keep separate directories for the `raw/` data, intermediate `interim/` data, and final `cleaned/` data.\
+You'll note that there is also a `README.md` associated with this directory. This is intentional: it should contain the following details:\
 1. Where the data come from, 
 2. What scripts under the `scripts/` directory transformed which files under `raw/` into which files under `processed/` and `cleaned/`, and
 3. Why each file under `cleaned/` exists, with optional references to particular notebooks. (Optional, especially when things are still in flux.)
@@ -148,26 +137,13 @@ Here, I'm suggesting placing the data under the same project directory, but only
 If you're working with other people, you will want to make sure that all of you agree on what the "authoritative" data source is. If it is a URL (e.g. to an s3 bucket, or to a database), then that URL should be stored and documented in the custom Python package, with a concise variable name attached to it. If it is a path on an HPC cluster and it fits on disk, there should be a script that downloads it so that you have a local version. 
 
 ### `scripts/`
+Scripts, defined as logical units of computation that aren't part of the notebook narratives, but nonetheless important for, say, getting the data in shape, or stitching together figures generated by individual notebooks.
 
-	/path/to/project/directory/
-	|- scripts/
-	   |- script1.py
-	   |- script2.py
-	   |- archive/
-		  |- no-longer-useful.py
-
-Like the `notebooks/` section, I think this is quite self-explanatory. Scripts, defined as logical units of computation that aren't part of the notebook narratives, but nonetheless important for, say, getting the data in shape, or stitching together figures generated by individual notebooks.
-
-## But wait, it's complicated, no?
-
-I proposed this project structure to colleagues, and was met with some degree of ambivalence. 
 
 ### Why not just put everything in notebooks?
-
 After all, aren't notebooks supposed to be comprehensive, reproducible units? Yes, but that doesn't mean that they have to be littered with every last detail embedded inside them. Notebooks are great for a data project's narrative, but if they get cluttered up with chunks of code that are copied & pasted from cell to cell, then we not only have an unreadable notebook, we also legitimately have a coding practices problem on hand. This is where the practices of refactoring code come in really handy.
 
 ### Why not just `custom.py` under `notebooks/`?
-
 Now, one may ask, "If we can import a `custom.py` from the same directory as the other notebooks, then why bother with the `setup.py` overhead?" My responses are as follows.
 
 If the project truly is small in scale, and you're working on it alone, then yes, don't bother with the `setup.py`. It's too much overhead to worry about.
@@ -177,9 +153,3 @@ However, if the project grows big, and multiple people are working on the same p
 Firstly, by creating a custom Python package for project-wide variables, functions, and classes, then they are available for not only notebooks, but also for, say, custom data engineering or report-generation scripts that may need to be run from time to time. This is especially relevant if installed into a project's data science environment (say, using `conda` environments), and I would consider this to be the biggest advantage to creating a custom Python package for the project.
 
 Secondly, we gain a single reference point for custom code. Mentally, if anything, a single reference point for code makes things easier to manage. We can also perform proper code review on the functions without having to worry about digging through the unreadable JSON blobs that Jupyter notebooks are under-the-hood. (Thankfully, we also have [`nbdime`](https://github.com/jupyter/nbdime) to help us with this!)
-
-## Conclusions
-
-I have to admit that I went back-and-forth many, many times over the course over a few months before I finally coalesced on this project structure. It's taken repeated experimentation on new projects and modifying existing ones to reach this point. My hope is that this organizational structure provides some inspiration for your project. 
-
-Perhaps you disagree with me, that this structure isn't the best. I'd love to hear your rationale for a different structure; there may well be inspiration that I could borrow!
